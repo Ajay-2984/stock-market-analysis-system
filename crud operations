@@ -1,0 +1,127 @@
+import sqlite3
+import pandas as pd
+
+from scripts.ui import success, error, pause
+from scripts.logger import log_info, log_error
+
+conn = sqlite3.connect("stock_market.db")
+
+cursor = conn.cursor()
+
+
+# --------------------------------------
+# INSERT NEW RECORD
+# --------------------------------------
+
+def insert_record():
+
+    try:
+
+        company = input("Enter company name: ")
+        date = input("Enter date (YYYY-MM-DD): ")
+        open_price = float(input("Enter open price: "))
+        high_price = float(input("Enter high price: "))
+        low_price = float(input("Enter low price: "))
+        close_price = float(input("Enter close price: "))
+        volume = int(input("Enter volume: "))
+
+        cursor.execute(
+            """
+            INSERT INTO stocks
+            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                company,
+                date,
+                open_price,
+                high_price,
+                low_price,
+                close_price,
+                volume
+            )
+        )
+
+        conn.commit()
+
+        success("Record Inserted Successfully")
+
+        log_info(f"Record Inserted : {company}")
+
+        pause()
+
+    except Exception as e:
+
+        error("Failed To Insert Record")
+
+        log_error(f"Insert Record Error : {e}")
+
+
+# --------------------------------------
+# VIEW RECORDS
+# --------------------------------------
+
+def view_records():
+
+    try:
+
+        query = "SELECT * FROM stocks"
+
+        df = pd.read_sql(query, conn)
+
+        if df.empty:
+
+            error("No Records Found")
+
+            log_error("View Records : No Records Found")
+
+            return
+
+        print(df)
+
+        log_info("Viewed All Records")
+
+        pause()
+
+    except Exception as e:
+
+        error("Unable To View Records")
+
+        log_error(f"View Records Error : {e}")
+
+
+# --------------------------------------
+# DELETE RECORD
+# --------------------------------------
+
+def delete_record():
+
+    try:
+
+        company = input("Enter company name to delete: ")
+
+        cursor.execute(
+            "DELETE FROM stocks WHERE company_name = ?",
+            (company,)
+        )
+
+        conn.commit()
+
+        if cursor.rowcount == 0:
+
+            error("Company Not Found")
+
+            log_error(f"Delete Failed : {company}")
+
+        else:
+
+            success("Record Deleted Successfully")
+
+            log_info(f"Record Deleted : {company}")
+
+        pause()
+
+    except Exception as e:
+
+        error("Failed To Delete Record")
+
+        log_error(f"Delete Record Error : {e}")
