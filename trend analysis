@@ -1,0 +1,76 @@
+import sqlite3
+import pandas as pd
+
+
+conn = sqlite3.connect(
+    "stock_market.db"
+)
+
+
+def detect_trend():
+
+    # USER INPUT
+    company = input(
+        "Enter company name: "
+    )
+
+    # SQL QUERY
+    query = """
+    SELECT *
+    FROM stocks
+    WHERE company_name = ?
+    """
+
+    df = pd.read_sql(
+        query,
+        conn,
+        params=(company,)
+    )
+
+    # CHECK EMPTY
+    if df.empty:
+
+        print("\nNo data found")
+
+        return
+
+    # MOVING AVERAGE
+    df['moving_average'] = (
+
+        df['close_price']
+        .rolling(window=5)
+        .mean()
+
+    )
+
+    # LATEST VALUES
+    latest_price = (
+        df['close_price']
+        .iloc[-1]
+    )
+
+    latest_average = (
+        df['moving_average']
+        .iloc[-1]
+    )
+
+    print("\n===== TREND ANALYSIS =====")
+
+    print(f"\nCompany: {company}")
+
+    print(
+        f"\nLatest Closing Price: {latest_price}"
+    )
+
+    print(
+        f"\nMoving Average: {latest_average}"
+    )
+
+    # TREND DETECTION
+    if latest_price > latest_average:
+
+        print("\nUPTREND")
+
+    else:
+
+        print("\nDOWNTREND")
